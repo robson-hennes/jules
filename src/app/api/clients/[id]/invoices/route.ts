@@ -5,21 +5,21 @@ import { randomUUID } from 'crypto';
 
 type RouteParams = {
   params: {
-    clientId: string;
+    id: string;
   }
 }
 
 // Get all invoices for a specific client
 export async function GET(request: Request, { params }: RouteParams) {
-  const { clientId } = params;
+  const { id } = params;
   const allInvoices = await getInvoices();
-  const clientInvoices = allInvoices.filter(inv => inv.clientId === clientId);
+  const clientInvoices = allInvoices.filter(inv => inv.clientId === id);
   return NextResponse.json(clientInvoices);
 }
 
 // Create a new invoice for a client
 export async function POST(request: Request, { params }: RouteParams) {
-  const { clientId } = params;
+  const { id } = params;
   const { amount, dueDate } = await request.json();
 
   if (!amount || !dueDate) {
@@ -30,7 +30,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const newInvoice: Invoice = {
     id: randomUUID(),
-    clientId,
+    clientId: id,
     amount: parseFloat(amount),
     dueDate,
     status: 'scheduled', // All new invoices start as 'scheduled'
