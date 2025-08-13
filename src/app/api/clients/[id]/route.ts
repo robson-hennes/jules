@@ -22,7 +22,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 export async function PUT(request: Request, { params }: RouteParams) {
   const { id } = params;
-  const updatedData = await request.json();
+  const { name, contact, address, document } = await request.json();
   const clients = await getClients();
 
   const clientIndex = clients.findIndex(c => c.id === id);
@@ -31,11 +31,13 @@ export async function PUT(request: Request, { params }: RouteParams) {
     return NextResponse.json({ message: 'Client not found' }, { status: 404 });
   }
 
-  // Preserve the original ID and merge data
+  // Safely update only the intended fields
   const updatedClient: Client = {
     ...clients[clientIndex],
-    ...updatedData,
-    id: id,
+    name: name || clients[clientIndex].name,
+    contact: contact || clients[clientIndex].contact,
+    address: address || clients[clientIndex].address,
+    document: document || clients[clientIndex].document,
   };
 
   clients[clientIndex] = updatedClient;

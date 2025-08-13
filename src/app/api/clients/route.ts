@@ -9,9 +9,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const newClientData = await request.json();
+  const { name, contact, address, document } = await request.json();
 
-  if (!newClientData.name || !newClientData.contact || !newClientData.address || !newClientData.document) {
+  if (!name || !contact || !address || !document) {
     return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
   }
 
@@ -19,11 +19,10 @@ export async function POST(request: Request) {
 
   const newClient: Client = {
     id: randomUUID(),
-    name: newClientData.name,
-    contact: newClientData.contact,
-    address: newClientData.address,
-    document: newClientData.document,
-    ...newClientData
+    name,
+    contact,
+    address,
+    document,
   };
 
   clients.push(newClient);
