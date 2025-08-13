@@ -52,10 +52,17 @@ export default function Home() {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900">Gestão de Clientes</h1>
-          {/* This link will eventually go to a new client page */}
-          <Link href="/clients/new" className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-            Novo Cliente
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
+              Dashboard
+            </Link>
+            <Link href="/notifications" className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
+              Notificações
+            </Link>
+            <Link href="/clients/new" className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+              Novo Cliente
+            </Link>
+          </div>
         </div>
       </header>
       <main className="container mx-auto p-4">

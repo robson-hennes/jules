@@ -17,23 +17,24 @@ export default function EditClientPage() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // State for the new invoice form
   const [newInvoiceAmount, setNewInvoiceAmount] = useState('');
   const [newInvoiceDueDate, setNewInvoiceDueDate] = useState('');
   const [isScheduling, setIsScheduling] = useState(false);
+  const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
 
   const fetchClientAndInvoices = async () => {
     if (!id) return;
+    setLoading(true);
     try {
-      setLoading(true);
-      // Fetch client data
-      const clientResponse = await fetch(`/api/clients/${id}`);
+      const [clientResponse, invoicesResponse] = await Promise.all([
+        fetch(`/api/clients/${id}`),
+        fetch(`/api/clients/${id}/invoices`)
+      ]);
+
       if (!clientResponse.ok) throw new Error('Client not found');
       const clientData = await clientResponse.json();
       setClient(clientData);
 
-      // Fetch invoices for the client
-      const invoicesResponse = await fetch(`/api/clients/${id}/invoices`);
       if (!invoicesResponse.ok) throw new Error('Failed to fetch invoices');
       const invoicesData = await invoicesResponse.json();
       setInvoices(invoicesData);
@@ -49,7 +50,7 @@ export default function EditClientPage() {
 
   useEffect(() => {
     fetchClientAndInvoices();
-  }, [id, router]);
+  }, [id]);
 
   const handleUpdateClient = async (clientData: Client) => {
     setIsSaving(true);
@@ -89,13 +90,28 @@ export default function EditClientPage() {
       alert('Boleto agendado com sucesso!');
       setNewInvoiceAmount('');
       setNewInvoiceDueDate('');
-      // Refresh the invoice list
-      fetchClientAndInvoices();
+      await fetchClientAndInvoices();
     } catch (error) {
       console.error(error);
       alert('Falha ao agendar o boleto.');
     } finally {
       setIsScheduling(false);
+    }
+  };
+
+  const handleMarkAsPaid = async (invoiceId: string) => {
+    setUpdatingInvoiceId(invoiceId);
+    try {
+      const response = await fetch(`/api/clients/${id}/invoices/${invoiceId}`, {
+        method: 'PATCH',
+      });
+      if (!response.ok) throw new Error('Failed to update invoice status');
+      await fetchClientAndInvoices();
+    } catch (error) {
+      console.error(error);
+      alert('Falha ao atualizar o status do boleto.');
+    } finally {
+      setUpdatingInvoiceId(null);
     }
   };
 
@@ -125,7 +141,6 @@ export default function EditClientPage() {
         <div className="bg-white p-8 rounded-xl shadow-md max-w-4xl mx-auto">
           <h2 className="text-2xl font-semibold mb-6">Boletos</h2>
 
-          {/* Schedule New Invoice Form */}
           <form onSubmit={handleScheduleInvoice} className="mb-8 p-4 border rounded-lg bg-gray-50 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div>
               <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Valor (R$)</label>
@@ -143,7 +158,6 @@ export default function EditClientPage() {
             </button>
           </form>
 
-          {/* Invoices List */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-100">
@@ -151,6 +165,7 @@ export default function EditClientPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vencimento</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -163,10 +178,21 @@ export default function EditClientPage() {
                         {invoice.status}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {invoice.status !== 'paid' && (
+                        <button
+                          onClick={() => handleMarkAsPaid(invoice.id)}
+                          disabled={updatingInvoiceId === invoice.id}
+                          className="text-green-600 hover:text-green-900 disabled:text-gray-400 disabled:cursor-wait"
+                        >
+                          {updatingInvoiceId === invoice.id ? 'Atualizando...' : 'Marcar como Pago'}
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={3} className="px-6 py-4 text-center text-gray-500">Nenhum boleto encontrado para este cliente.</td>
+                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500">Nenhum boleto encontrado para este cliente.</td>
                   </tr>
                 )}
               </tbody>
